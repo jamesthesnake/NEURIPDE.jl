@@ -67,7 +67,7 @@ discretization = PhysicsInformedNN(chain, QuadratureTraining(),init_params =init
 
 @named pde_system = PDESystem(eq,bcs,domains,[x,y],[u(x, y)])
 prob = discretize(pde_system,discretization)
-
+#call
 callback = function (p,l)
     println("Current loss is: $l")
     return false
