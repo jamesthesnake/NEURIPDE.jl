@@ -27,7 +27,7 @@ where `\theta = 1 - x/2` and with initial and boundary conditions:
 We use physics-informed neural networks.
 
 ```julia
-using NeuralPDE, Flux, ModelingToolkit, GalacticOptim, GalacticOptimJL, DiffEqFlux
+using NeuralPDE, Flux, ModelingToolkit, Optimization, OptimizationOptimJL, DiffEqFlux
 import ModelingToolkit: Interval, infimum, supremum
 
 @parameters x, t
@@ -70,8 +70,8 @@ callback = function (p,l)
     return false
 end
 
-opt = GalacticOptimJL.BFGS()
-res = GalacticOptim.solve(prob,opt; callback = callback, maxiters=2000)
+opt = OptimizationOptimJL.BFGS()
+res = Optimization.solve(prob,opt; callback = callback, maxiters=2000)
 phi = discretization.phi
 ```
 
