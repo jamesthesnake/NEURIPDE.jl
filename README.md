@@ -35,7 +35,7 @@ the documentation, which contains the unreleased features.
 ## Example: Solving 2D Poisson Equation via Physics-Informed Neural Networks
 
 ```julia
-using NeuralPDE, Flux, ModelingToolkit, GalacticOptim, DiffEqFlux
+using NeuralPDE, Flux, ModelingToolkit, Optimization, DiffEqFlux
 using Quadrature, Cubature
 import ModelingToolkit: Interval, infimum, supremum
 
@@ -48,8 +48,8 @@ Dyy = Differential(y)^2
 eq  = Dxx(u(x,y)) + Dyy(u(x,y)) ~ -sin(pi*x)*sin(pi*y)
 
 # Boundary conditions
-bcs = [u(0,y) ~ 0.0, u(1,y) ~ -sin(pi*1)*sin(pi*y),
-       u(x,0) ~ 0.0, u(x,1) ~ -sin(pi*x)*sin(pi*1)]
+bcs = [u(0,y) ~ 0.0, u(1,y) ~ 0,
+       u(x,0) ~ 0.0, u(x,1) ~ 0]
 # Space and time domains
 domains = [x ∈ Interval(0.0,1.0),
            y ∈ Interval(0.0,1.0)]
@@ -67,15 +67,15 @@ discretization = PhysicsInformedNN(chain, QuadratureTraining(),init_params =init
 
 @named pde_system = PDESystem(eq,bcs,domains,[x,y],[u(x, y)])
 prob = discretize(pde_system,discretization)
-#call
+
 callback = function (p,l)
     println("Current loss is: $l")
     return false
 end
 
-res = GalacticOptim.solve(prob, ADAM(0.1); callback = callback, maxiters=4000)
+res = Optimization.solve(prob, ADAM(0.1); callback = callback, maxiters=4000)
 prob = remake(prob,u0=res.minimizer)
-res = GalacticOptim.solve(prob, ADAM(0.01); callback = callback, maxiters=2000)
+res = Optimization.solve(prob, ADAM(0.01); callback = callback, maxiters=2000)
 phi = discretization.phi
 ```
 
@@ -131,3 +131,15 @@ pdealg = NNPDENS(u0, σᵀ∇u, opt=opt)
                             alg=EM(), dt=1.2, pabstol=1f-2)
 ```
 
+### Citation
+
+If you use NeuralPDE.jl in your research, please cite [this paper](https://arxiv.org/abs/2107.09443):
+
+```bib
+@article{zubov2021neuralpde,
+  title={NeuralPDE: Automating Physics-Informed Neural Networks (PINNs) with Error Approximations},
+  author={Zubov, Kirill and McCarthy, Zoe and Ma, Yingbo and Calisto, Francesco and Pagliarino, Valerio and Azeglio, Simone and Bottero, Luca and Luj{\'a}n, Emmanuel and Sulzer, Valentin and Bharambe, Ashutosh and others},
+  journal={arXiv preprint arXiv:2107.09443},
+  year={2021}
+}
+```

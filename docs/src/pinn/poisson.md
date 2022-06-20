@@ -11,9 +11,9 @@ with the boundary conditions:
 ```math
 \begin{align*}
 u(0, y) &= 0 \, ,\\
-u(1, y) &= - \sin(\pi) \sin(\pi y) \, ,\\
+u(1, y) &= 0 \, ,\\
 u(x, 0) &= 0 \, ,\\
-u(x, 1) &=  - \sin(\pi x) \sin(\pi) \, ,
+u(x, 1) &= 0 \, ,
 \end{align*}
 ```
 
@@ -28,7 +28,7 @@ with grid discretization `dx = 0.1`. We will use physics-informed neural network
 ## Copy-Pastable Code
 
 ```julia
-using NeuralPDE, Flux, ModelingToolkit, GalacticOptim, GalacticOptimJL, DiffEqFlux
+using NeuralPDE, Flux, ModelingToolkit, Optimization, OptimizationOptimJL, DiffEqFlux
 import ModelingToolkit: Interval, infimum, supremum
 
 @parameters x y
@@ -40,8 +40,8 @@ Dyy = Differential(y)^2
 eq  = Dxx(u(x,y)) + Dyy(u(x,y)) ~ -sin(pi*x)*sin(pi*y)
 
 # Boundary conditions
-bcs = [u(0,y) ~ 0.0, u(1,y) ~ -sin(pi*1)*sin(pi*y),
-       u(x,0) ~ 0.0, u(x,1) ~ -sin(pi*x)*sin(pi*1)]
+bcs = [u(0,y) ~ 0.0, u(1,y) ~ 0.0,
+       u(x,0) ~ 0.0, u(x,1) ~ 0.0]
 # Space and time domains
 domains = [x ∈ Interval(0.0,1.0),
            y ∈ Interval(0.0,1.0)]
@@ -60,7 +60,7 @@ discretization = PhysicsInformedNN(chain,GridTraining(dx),init_params =initθ)
 prob = discretize(pde_system,discretization)
 
 #Optimizer
-opt = GalacticOptimJL.BFGS()
+opt = OptimizationOptimJL.BFGS()
 
 #Callback function
 callback = function (p,l)
@@ -68,7 +68,7 @@ callback = function (p,l)
     return false
 end
 
-res = GalacticOptim.solve(prob, opt, callback = callback, maxiters=1000)
+res = Optimization.solve(prob, opt, callback = callback, maxiters=1000)
 phi = discretization.phi
 
 using Plots
@@ -91,7 +91,7 @@ plot(p1,p2,p3)
 The ModelingToolkit PDE interface for this example looks like this:
 
 ```julia
-using NeuralPDE, Flux, ModelingToolkit, GalacticOptim, GalacticOptimJL, DiffEqFlux
+using NeuralPDE, Flux, ModelingToolkit, Optimization, OptimizationOptimJL, DiffEqFlux
 import ModelingToolkit: Interval, infimum, supremum
 
 @parameters x y
@@ -103,8 +103,8 @@ import ModelingToolkit: Interval, infimum, supremum
 eq  = Dxx(u(x,y)) + Dyy(u(x,y)) ~ -sin(pi*x)*sin(pi*y)
 
 # Boundary conditions
-bcs = [u(0,y) ~ 0.0, u(1,y) ~ -sin(pi*1)*sin(pi*y),
-       u(x,0) ~ 0.0, u(x,1) ~ -sin(pi*x)*sin(pi*1)]
+bcs = [u(0,y) ~ 0.0, u(1,y) ~ 0.0,
+       u(x,0) ~ 0.0, u(x,1) ~ 0.0]
 # Space and time domains
 domains = [x ∈ Interval(0.0,1.0),
            y ∈ Interval(0.0,1.0)]
@@ -147,14 +147,14 @@ Here, we define the callback function and the optimizer. And now we can solve th
 
 ```julia
 #Optimizer
-opt = GalacticOptimJL.BFGS()
+opt = OptimizationOptimJL.BFGS()
 
 callback = function (p,l)
     println("Current loss is: $l")
     return false
 end
 
-res = GalacticOptim.solve(prob, opt, callback = callback, maxiters=1000)
+res = Optimization.solve(prob, opt, callback = callback, maxiters=1000)
 phi = discretization.phi
 ```
 

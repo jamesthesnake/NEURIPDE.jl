@@ -222,7 +222,7 @@ end
 For more information look: Quadrature.jl https://github.com/SciML/Quadrature.jl
 """
 struct QuadratureTraining <: TrainingStrategies
-    quadrature_alg::DiffEqBase.AbstractQuadratureAlgorithm
+    quadrature_alg::SciMLBase.AbstractIntegralAlgorithm
     reltol::Float64
     abstol::Float64
     maxiters::Int64
@@ -1047,7 +1047,7 @@ function get_numeric_integral(strategy, _indvars, _depvars, chain, derivative)
                         @Zygote.ignore @views(cord_[integrating_var_id]) .= x
                         return integrand_func(cord_, p, phi, derivative, nothing, u, nothing)
                     end
-                    prob_ = QuadratureProblem(integrand_,lb, ub ,θ)
+                    prob_ = IntegralProblem(integrand_,lb, ub ,θ)
                     sol = solve(prob_,CubatureJLh(),reltol=1e-3,abstol=1e-3)[1]
 
                     return sol
@@ -1176,7 +1176,7 @@ function get_loss_function(loss_function, lb,ub ,eltypeθ, parameterless_type_θ
             x = adapt(parameterless_type_θ,x)
             sum(abs2,loss_(x,θ), dims=2) #./ size_x
         end
-        prob = QuadratureProblem(_loss,lb,ub,θ,batch = strategy.batch,nout=1)
+        prob = IntegralProblem(_loss,lb,ub,θ,batch = strategy.batch,nout=1)
         solve(prob,
               strategy.quadrature_alg,
               reltol = strategy.reltol,
@@ -1491,6 +1491,6 @@ end
 # Convert a PDE problem into an OptimizationProblem
 function SciMLBase.discretize(pde_system::PDESystem, discretization::PhysicsInformedNN)
     discretized_functions = discretize_inner_functions(pde_system, discretization)
-    f = OptimizationFunction(discretized_functions.full_loss_function, GalacticOptim.AutoZygote())
-    GalacticOptim.OptimizationProblem(f, discretized_functions.flat_initθ)
+    f = OptimizationFunction(discretized_functions.full_loss_function, Optimization.AutoZygote())
+    Optimization.OptimizationProblem(f, discretized_functions.flat_initθ)
 end
